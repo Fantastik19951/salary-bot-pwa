@@ -1,0 +1,11 @@
+# Railway Configuration
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "echo 'Use service-specific start commands'"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10

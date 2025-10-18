@@ -1,0 +1,54 @@
+{
+  "name": "Salary Bot PWA",
+  "short_name": "SalaryBot",
+  "description": "Управление доходами и клиентами",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Добавить запись",
+      "short_name": "Добавить",
+      "description": "Быстро добавить новую запись",
+      "url": "/add",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Клиенты",
+      "short_name": "Клиенты",
+      "description": "Просмотр клиентов",
+      "url": "/clients",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "KPI",
+      "short_name": "KPI",
+      "description": "Статистика и аналитика",
+      "url": "/kpi/current",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Календарь",
+      "short_name": "Календарь",
+      "description": "Просмотр по датам",
+      "url": "/year/2025",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

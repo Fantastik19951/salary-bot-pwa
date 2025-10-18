@@ -1,0 +1,18 @@
+{
+  "widgets": [
+    {
+      "name": "Salary Today",
+      "description": "Показывает заработок за сегодня",
+      "url": "/widget/today",
+      "sizes": ["small", "medium"],
+      "updateInterval": 300
+    },
+    {
+      "name": "Salary Month",
+      "description": "Показывает заработок за месяц",
+      "url": "/widget/month",
+      "sizes": ["medium", "large"],
+      "updateInterval": 600
+    }
+  ]
+}
