@@ -5,8 +5,9 @@ from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional, Set
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 import redis.asyncio as aioredis
 from pydantic import BaseModel
 import os
@@ -79,6 +80,15 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# Middleware для логирования CORS
+@app.middleware("http")
+async def log_cors(request: Request, call_next):
+    origin = request.headers.get("origin")
+    logger.info(f"Request: {request.method} {request.url.path} from origin: {origin}")
+    response = await call_next(request)
+    logger.info(f"Response headers: {dict(response.headers)}")
+    return response
 
 async def background_sync():
     while True:
