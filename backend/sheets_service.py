@@ -1,5 +1,7 @@
 import re
 import logging
+import json
+import os
 from datetime import datetime, date
 from collections import defaultdict
 from typing import Dict, List, Optional
@@ -20,7 +22,19 @@ class SheetsService:
             "https://www.googleapis.com/auth/drive.file",
             "https://www.googleapis.com/auth/drive",
         ]
-        creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_path, scope)
+        
+        # Читаем credentials из переменной окружения или файла
+        google_creds_json = os.getenv("GOOGLE_CREDENTIALS")
+        if google_creds_json:
+            # Если есть в переменной - парсим JSON
+            creds_dict = json.loads(google_creds_json)
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+            logger.info("✅ Credentials загружены из переменной окружения")
+        else:
+            # Если нет - читаем из файла (для локальной разработки)
+            creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_path, scope)
+            logger.info("✅ Credentials загружены из файла")
+        
         self.sheet = gspread.authorize(creds).open("TelegramBotData").sheet1
         logger.info("✅ Sheets подключен")
     
