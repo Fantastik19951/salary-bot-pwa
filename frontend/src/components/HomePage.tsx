@@ -10,6 +10,8 @@ import { ru } from 'date-fns/locale'
 import { haptics } from '../utils/haptics'
 import { normalizeClientName } from '../utils/normalize'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 const MotionCard = motion(Card)
 
 const formatMoney = (amount: number) => {
@@ -34,7 +36,7 @@ export default function HomePage() {
   const [clientsCount, setClientsCount] = useState(0)
 
   useEffect(() => {
-    fetch('/api/clients/analytics')
+    fetch(`${API_URL}/api/clients/analytics`)
       .then(res => res.json())
       .then(data => setClientsCount(data.stats.totalClients))
       .catch(() => setClientsCount(0))

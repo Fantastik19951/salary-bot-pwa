@@ -8,6 +8,8 @@ import {
   Search, ArrowBack, ExpandMore
 } from '@mui/icons-material'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 const formatMoney = (amount: number) => new Intl.NumberFormat('ru-RU').format(Math.floor(amount))
 
 // Максимально оптимизированная карточка без анимаций
@@ -117,7 +119,7 @@ export default function CompactClientsPage() {
     
     const loadClients = async () => {
       try {
-        const res = await fetch('/api/clients/analytics')
+        const res = await fetch(`${API_URL}/api/clients/analytics`)
         const data = await res.json()
         
         if (mounted) {

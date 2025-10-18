@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000'
+
 interface Entry {
   date: string
   symbols: string
@@ -37,8 +40,7 @@ export const useAppStore = create<AppState>()(
 
       connectWebSocket: () => {
         try {
-          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-          const wsUrl = `${protocol}//${window.location.host}/ws`
+          const wsUrl = `${WS_URL}/ws`
           console.log('🔌 Подключаем WebSocket:', wsUrl)
           
           const ws = new WebSocket(wsUrl)
@@ -86,7 +88,7 @@ export const useAppStore = create<AppState>()(
       syncData: async () => {
         try {
           console.log('🔄 Синхронизация данных...')
-          const response = await fetch('/api/entries')
+          const response = await fetch(`${API_URL}/api/entries`)
           
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
