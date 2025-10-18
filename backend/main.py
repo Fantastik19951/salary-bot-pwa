@@ -61,12 +61,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Salary Bot PWA", version="1.0.0", lifespan=lifespan)
 
+# CORS: allow_credentials=True несовместим с allow_origins=["*"]
+# Используем конкретные origins или отключаем credentials
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,  # Отключаем для работы с wildcard origins
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 async def background_sync():
