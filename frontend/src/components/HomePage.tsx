@@ -9,8 +9,7 @@ import { format, getDaysInMonth, startOfMonth, subMonths, differenceInDays, subD
 import { ru } from 'date-fns/locale'
 import { haptics } from '../utils/haptics'
 import { normalizeClientName } from '../utils/normalize'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import { API_URL } from '../utils/env'
 
 const MotionCard = motion(Card)
 

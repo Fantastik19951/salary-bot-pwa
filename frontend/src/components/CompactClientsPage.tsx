@@ -7,8 +7,7 @@ import {
 import { 
   Search, ArrowBack, ExpandMore
 } from '@mui/icons-material'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import { API_URL } from '../utils/env'
 
 const formatMoney = (amount: number) => new Intl.NumberFormat('ru-RU').format(Math.floor(amount))
 
