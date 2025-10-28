@@ -88,9 +88,9 @@ export default function HomePage() {
     const daysLeft = periodDays - currentPeriodDay
     const forecastValue = currentRevenue + (avgPerDay * daysLeft)
     
-    // Прибыль = (выручка * 10%) - зарплаты
-    const currentEarnings = (currentRevenue * 0.1) - currentSalaries
-    const forecastEarnings = (forecastValue * 0.1) - currentSalaries
+    // Прибыль = только 10% от выручки (зарплаты не вычитаются!)
+    const currentEarnings = currentRevenue * 0.1
+    const forecastEarnings = forecastValue * 0.1
 
     return {
       current: currentRevenue,
@@ -121,7 +121,7 @@ export default function HomePage() {
       .filter((e: any) => e.salary)
       .reduce((sum: any, e: any) => sum + e.salary, 0)
     
-    const currentEarnings = (currentRevenue * 0.10) - currentSalaries
+    const currentEarnings = currentRevenue * 0.10
     
     // Прошлый месяц
     const prevRevenue = prevEntries
@@ -132,7 +132,7 @@ export default function HomePage() {
       .filter((e: any) => e.salary)
       .reduce((sum: any, e: any) => sum + e.salary, 0)
     
-    const prevEarnings = (prevRevenue * 0.10) - prevSalaries
+    const prevEarnings = prevRevenue * 0.10
     
     // Рост
     const revenueGrowth = prevRevenue > 0 
@@ -155,7 +155,7 @@ export default function HomePage() {
     const forecastRevenue = avgPerDay * daysInMonth
     const avgSalaryPerDay = currentDay > 0 ? currentSalaries / currentDay : 0
     const forecastSalaries = avgSalaryPerDay * daysInMonth
-    const forecastEarnings = (forecastRevenue * 0.10) - forecastSalaries
+    const forecastEarnings = forecastRevenue * 0.10
     
     // Дней без записей
     const daysWithEntries = new Set(

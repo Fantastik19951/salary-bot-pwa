@@ -95,9 +95,9 @@ export default function ImprovedKPIView() {
     const countDiff = currentCount - prevCount
     const countDiffPercent = prevCount > 0 ? (countDiff / prevCount) * 100 : 0
 
-    // Прибыль = (выручка * 10%) - зарплаты
-    const currentEarnings = (currentRevenue * 0.1) - currentSalaries
-    const prevEarnings = (prevRevenue * 0.1) - prevSalaries
+    // Прибыль = только 10% от выручки
+    const currentEarnings = currentRevenue * 0.1
+    const prevEarnings = prevRevenue * 0.1
     const earningsDiff = currentEarnings - prevEarnings
 
     const avgTransaction = currentCount > 0 ? currentRevenue / currentCount : 0
@@ -302,7 +302,7 @@ export default function ImprovedKPIView() {
             
             <Box flex={1} minWidth={0}>
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' } }}>
-                Прибыль (10% - ЗП)
+                Прибыль (10%)
               </Typography>
               <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }} noWrap>
                 {formatMoney(kpiData.currentEarnings)} $
@@ -387,7 +387,7 @@ export default function ImprovedKPIView() {
               Прибыль
             </Typography>
             <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-              {formatMoney((kpiData.forecast * 0.1) - (kpiData.currentSalaries * (kpiData.forecast / Math.max(kpiData.currentRevenue, 1))))} $
+              {formatMoney(kpiData.forecast * 0.1)} $
             </Typography>
           </Box>
         </Stack>

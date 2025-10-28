@@ -29,13 +29,32 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
   return false
 }
 
-export const sendNotification = (title: string, options?: NotificationOptions) => {
-  if (Notification.permission === 'granted') {
-    new Notification(title, {
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      ...options
-    })
+export const sendNotification = async (title: string, options?: NotificationOptions & { url?: string }) => {
+  if (Notification.permission !== 'granted') {
+    console.log('Notification permission not granted')
+    return
+  }
+
+  try {
+    // Используем Service Worker для iOS совместимости
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title,
+        body: options?.body || '',
+        tag: options?.tag || 'notification',
+        url: options?.url || '/'
+      })
+    } else {
+      // Fallback для старых браузеров
+      new Notification(title, {
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        ...options
+      })
+    }
+  } catch (error) {
+    console.error('Error sending notification:', error)
   }
 }
 

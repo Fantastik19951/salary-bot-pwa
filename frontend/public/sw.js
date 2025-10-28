@@ -90,3 +90,47 @@ async function syncData() {
 async function getPendingActions() {
   return []
 }
+
+// Push уведомления
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {}
+  const title = data.title || 'Salary Bot'
+  const options = {
+    body: data.body || 'Новое уведомление',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: data.tag || 'notification',
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+    data: data.url || '/'
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  )
+})
+
+// Клик по уведомлению
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  
+  event.waitUntil(
+    clients.openWindow(event.notification.data || '/')
+  )
+})
+
+// Background Sync для уведомлений
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, body, tag, url } = event.data
+    self.registration.showNotification(title, {
+      body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: tag || 'notification',
+      requireInteraction: false,
+      vibrate: [200, 100, 200],
+      data: url || '/'
+    })
+  }
+})
