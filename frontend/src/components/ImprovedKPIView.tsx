@@ -77,6 +77,15 @@ export default function ImprovedKPIView() {
       .filter((e: any) => e.amount)
       .reduce((sum: number, e: any) => sum + e.amount, 0)
 
+    // Подсчет зарплат
+    const currentSalaries = currentFiltered
+      .filter((e: any) => e.salary)
+      .reduce((sum: number, e: any) => sum + e.salary, 0)
+    
+    const prevSalaries = prevFiltered
+      .filter((e: any) => e.salary)
+      .reduce((sum: number, e: any) => sum + e.salary, 0)
+
     const currentCount = currentFiltered.filter((e: any) => e.amount).length
     const prevCount = prevFiltered.filter((e: any) => e.amount).length
 
@@ -86,8 +95,9 @@ export default function ImprovedKPIView() {
     const countDiff = currentCount - prevCount
     const countDiffPercent = prevCount > 0 ? (countDiff / prevCount) * 100 : 0
 
-    const currentEarnings = currentRevenue * 0.1
-    const prevEarnings = prevRevenue * 0.1
+    // Прибыль = (выручка * 10%) - зарплаты
+    const currentEarnings = (currentRevenue * 0.1) - currentSalaries
+    const prevEarnings = (prevRevenue * 0.1) - prevSalaries
     const earningsDiff = currentEarnings - prevEarnings
 
     const avgTransaction = currentCount > 0 ? currentRevenue / currentCount : 0
@@ -130,7 +140,9 @@ export default function ImprovedKPIView() {
       avgDiff,
       forecast,
       progress,
-      periodType: autoPeriodType
+      periodType: autoPeriodType,
+      currentSalaries,
+      prevSalaries
     }
   }, [entries, mode, autoPeriodType])
 
@@ -290,7 +302,7 @@ export default function ImprovedKPIView() {
             
             <Box flex={1} minWidth={0}>
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' } }}>
-                Заработок (10%)
+                Прибыль (10% - ЗП)
               </Typography>
               <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }} noWrap>
                 {formatMoney(kpiData.currentEarnings)} $
@@ -372,10 +384,10 @@ export default function ImprovedKPIView() {
           </Box>
           <Box textAlign="right">
             <Typography variant="caption" sx={{ opacity: 0.75, fontSize: { xs: '0.6rem', sm: '0.65rem' } }}>
-              Заработок
+              Прибыль
             </Typography>
             <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-              {formatMoney(kpiData.forecast * 0.1)} $
+              {formatMoney((kpiData.forecast * 0.1) - (kpiData.currentSalaries * (kpiData.forecast / Math.max(kpiData.currentRevenue, 1))))} $
             </Typography>
           </Box>
         </Stack>

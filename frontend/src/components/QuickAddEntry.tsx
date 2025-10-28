@@ -12,6 +12,8 @@ export default function QuickAddEntry() {
   const [quickMode, setQuickMode] = useState(true)
   const [type, setType] = useState<'amount' | 'salary'>('amount')
   const [singleInput, setSingleInput] = useState('')
+  const [nameInput, setNameInput] = useState('')
+  const [amountInput, setAmountInput] = useState('')
   const [date, setDate] = useState(() => {
     const today = new Date()
     return `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`
@@ -57,10 +59,37 @@ export default function QuickAddEntry() {
   }
 
   const handleQuickAdd = async () => {
-    const parsed = parseInput(singleInput)
-    if (!parsed) {
-      haptics.error()
-      return
+    let name: string
+    let amount: number
+
+    if (quickMode) {
+      // Быстрый режим: парсим единое поле
+      const parsed = parseInput(singleInput)
+      if (!parsed) {
+        haptics.error()
+        return
+      }
+      name = parsed.name
+      amount = parsed.amount
+    } else {
+      // Обычный режим: используем отдельные поля
+      if (type === 'salary') {
+        // Для зарплаты имя по умолчанию "ЗАРПЛАТА"
+        name = 'ЗАРПЛАТА'
+        amount = parseFloat(amountInput)
+      } else {
+        if (!nameInput.trim() || !amountInput) {
+          haptics.error()
+          return
+        }
+        name = nameInput.trim()
+        amount = parseFloat(amountInput)
+      }
+
+      if (isNaN(amount) || amount <= 0) {
+        haptics.error()
+        return
+      }
     }
 
     haptics.success()
@@ -70,18 +99,18 @@ export default function QuickAddEntry() {
 
     const entry: any = {
       date: formattedDate,
-      symbols: parsed.name
+      symbols: name
     }
 
     if (type === 'amount') {
-      entry.amount = parsed.amount
+      entry.amount = amount
     } else {
-      entry.salary = parsed.amount
+      entry.salary = amount
     }
 
     await addEntry(entry)
     setAddedCount(prev => prev + 1)
-    setTodayTotal(prev => prev + parsed.amount)
+    setTodayTotal(prev => prev + amount)
     
     // Синхронизируем данные
     await syncData()
@@ -91,7 +120,9 @@ export default function QuickAddEntry() {
       setSingleInput('')
       setTimeout(() => inputRef.current?.focus(), 50)
     } else {
-      // Обычный режим: переходим на страницу дня
+      // Обычный режим: очищаем поля и остаемся на странице
+      setNameInput('')
+      setAmountInput('')
       navigate(`/day/${year}/${month}/${day}`)
     }
   }
@@ -105,10 +136,6 @@ export default function QuickAddEntry() {
     }
   }
 
-  const handleDone = () => {
-    const [year, month, day] = date.split('-')
-    navigate(`/day/${year}/${month}/${day}`)
-  }
 
   return (
     <Box>
@@ -230,23 +257,143 @@ export default function QuickAddEntry() {
             />
           </Box>
 
-          {/* Единое поле ввода */}
-          <Box>
-            <Typography variant="caption" fontWeight={600} color="text.secondary" mb={1} display="block" fontSize="0.7rem">
-              Запись (сумма + имя)
-            </Typography>
-            <Autocomplete
-              freeSolo
-              options={clientSuggestions.map(name => `${name}`)}
-              inputValue={singleInput}
-              onInputChange={(e, val) => setSingleInput(val)}
-              renderInput={(params) => (
+          {/* Поля ввода */}
+          {quickMode ? (
+            // Быстрый режим: единое поле
+            <Box>
+              <Typography variant="caption" fontWeight={600} color="text.secondary" mb={1} display="block" fontSize="0.7rem">
+                Запись (сумма + имя)
+              </Typography>
+              <Autocomplete
+                freeSolo
+                options={clientSuggestions.map(name => `${name}`)}
+                inputValue={singleInput}
+                onInputChange={(e, val) => setSingleInput(val)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    inputRef={inputRef}
+                    placeholder="5000 Иванов или Иванов 5000"
+                    size="small"
+                    onKeyDown={handleKeyDown}
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        borderRadius: 2,
+                        fontSize: '0.875rem'
+                      }
+                    }}
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <li {...props} key={option}>
+                    <Typography fontSize="0.875rem">{option}</Typography>
+                  </li>
+                )}
+              />
+              
+              {/* Подсказки */}
+              {clientSuggestions.length > 0 && !singleInput && (
+                <Stack direction="row" spacing={0.5} mt={1} flexWrap="wrap">
+                  <Typography variant="caption" color="text.secondary" fontSize="0.65rem" mr={0.5}>
+                    Быстрый выбор:
+                  </Typography>
+                  {clientSuggestions.slice(0, 5).map(name => (
+                    <Chip 
+                      key={name}
+                      label={name}
+                      size="small"
+                      onClick={() => setSingleInput(name + ' ')}
+                      sx={{ 
+                        height: 20, 
+                        fontSize: '0.65rem',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          bgcolor: alpha('#667eea', 0.1)
+                        }
+                      }}
+                    />
+                  ))}
+                </Stack>
+              )}
+
+              {/* Превью парсинга */}
+              {singleInput && (() => {
+                const parsed = parseInput(singleInput)
+                if (parsed) {
+                  return (
+                    <Box 
+                      mt={1} 
+                      p={1.5} 
+                      sx={{ 
+                        bgcolor: alpha('#667eea', 0.05),
+                        borderRadius: 1.5,
+                        border: `1px solid ${alpha('#667eea', 0.2)}`
+                      }}
+                    >
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Typography variant="caption" fontSize="0.7rem" color="text.secondary">
+                          Превью:
+                        </Typography>
+                        <Typography variant="body2" fontSize="0.875rem" fontWeight={600}>
+                          {parsed.name}
+                        </Typography>
+                        <Typography variant="body2" fontSize="0.875rem" fontWeight={700} sx={{ color: '#667eea' }}>
+                          ${parsed.amount.toLocaleString()}
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  )
+                }
+                return null
+              })()}
+            </Box>
+          ) : (
+            // Обычный режим: раздельные поля
+            <Stack spacing={2}>
+              {type === 'amount' && (
+                <Box>
+                  <Typography variant="caption" fontWeight={600} color="text.secondary" mb={1} display="block" fontSize="0.7rem">
+                    Имя клиента
+                  </Typography>
+                  <Autocomplete
+                    freeSolo
+                    options={clientSuggestions}
+                    inputValue={nameInput}
+                    onInputChange={(e, val) => setNameInput(val)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        inputRef={inputRef}
+                        placeholder="Введите имя"
+                        size="small"
+                        sx={{
+                          '& .MuiInputBase-root': {
+                            borderRadius: 2,
+                            fontSize: '0.875rem'
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                </Box>
+              )}
+              <Box>
+                <Typography variant="caption" fontWeight={600} color="text.secondary" mb={1} display="block" fontSize="0.7rem">
+                  {type === 'salary' ? 'Сумма зарплаты' : 'Сумма'}
+                </Typography>
                 <TextField
-                  {...params}
-                  inputRef={inputRef}
-                  placeholder="5000 Иванов или Иванов 5000"
+                  fullWidth
+                  type="number"
+                  value={amountInput}
+                  onChange={(e) => setAmountInput(e.target.value)}
+                  placeholder="0"
                   size="small"
-                  onKeyDown={handleKeyDown}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && amountInput && (type === 'salary' || nameInput.trim())) {
+                      e.preventDefault()
+                      handleQuickAdd()
+                    }
+                  }}
                   sx={{
                     '& .MuiInputBase-root': {
                       borderRadius: 2,
@@ -254,115 +401,37 @@ export default function QuickAddEntry() {
                     }
                   }}
                 />
-              )}
-              renderOption={(props, option) => (
-                <li {...props} key={option}>
-                  <Typography fontSize="0.875rem">{option}</Typography>
-                </li>
-              )}
-            />
-            
-            {/* Подсказки */}
-            {clientSuggestions.length > 0 && !singleInput && (
-              <Stack direction="row" spacing={0.5} mt={1} flexWrap="wrap">
-                <Typography variant="caption" color="text.secondary" fontSize="0.65rem" mr={0.5}>
-                  Быстрый выбор:
-                </Typography>
-                {clientSuggestions.slice(0, 5).map(name => (
-                  <Chip 
-                    key={name}
-                    label={name}
-                    size="small"
-                    onClick={() => setSingleInput(name + ' ')}
-                    sx={{ 
-                      height: 20, 
-                      fontSize: '0.65rem',
-                      cursor: 'pointer',
-                      '&:hover': {
-                        bgcolor: alpha('#667eea', 0.1)
-                      }
-                    }}
-                  />
-                ))}
-              </Stack>
-            )}
-
-            {/* Превью парсинга */}
-            {singleInput && (() => {
-              const parsed = parseInput(singleInput)
-              if (parsed) {
-                return (
-                  <Box 
-                    mt={1} 
-                    p={1.5} 
-                    sx={{ 
-                      bgcolor: alpha('#667eea', 0.05),
-                      borderRadius: 1.5,
-                      border: `1px solid ${alpha('#667eea', 0.2)}`
-                    }}
-                  >
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <Typography variant="caption" fontSize="0.7rem" color="text.secondary">
-                        Превью:
-                      </Typography>
-                      <Typography variant="body2" fontSize="0.875rem" fontWeight={600}>
-                        {parsed.name}
-                      </Typography>
-                      <Typography variant="body2" fontSize="0.875rem" fontWeight={700} sx={{ color: '#667eea' }}>
-                        ${parsed.amount.toLocaleString()}
-                      </Typography>
-                    </Stack>
-                  </Box>
-                )
-              }
-              return null
-            })()}
-          </Box>
+                {type === 'salary' && (
+                  <Typography variant="caption" color="text.secondary" fontSize="0.65rem" mt={0.5} display="block">
+                    Имя будет установлено как "ЗАРПЛАТА"
+                  </Typography>
+                )}
+              </Box>
+            </Stack>
+          )}
 
           {/* Кнопки */}
-          <Stack direction="row" spacing={1}>
-            <Button
-              fullWidth
-              variant="contained"
-              size="large"
-              disabled={!parseInput(singleInput)}
-              onClick={handleQuickAdd}
-              startIcon={<Check />}
-              sx={{
-                py: 1.25,
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                fontSize: '0.875rem',
-                fontWeight: 700,
-                textTransform: 'none',
-                '&:disabled': {
-                  background: alpha('#000', 0.12)
-                }
-              }}
-            >
-              {quickMode ? 'Добавить (Enter)' : 'Добавить'}
-            </Button>
-            
-            {addedCount > 0 && (
-              <Button
-                variant="outlined"
-                size="large"
-                onClick={handleDone}
-                sx={{
-                  minWidth: 100,
-                  py: 1.25,
-                  borderRadius: 2,
-                  borderColor: '#667eea',
-                  color: '#667eea',
-                  fontSize: '0.875rem',
-                  fontWeight: 700,
-                  textTransform: 'none',
-                }}
-              >
-                Готово
-              </Button>
-            )}
-          </Stack>
+          <Button
+            fullWidth
+            variant="contained"
+            size="large"
+            disabled={quickMode ? !parseInput(singleInput) : (type === 'amount' ? (!nameInput.trim() || !amountInput) : !amountInput)}
+            onClick={handleQuickAdd}
+            startIcon={<Check />}
+            sx={{
+              py: 1.25,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              textTransform: 'none',
+              '&:disabled': {
+                background: alpha('#000', 0.12)
+              }
+            }}
+          >
+            {quickMode ? 'Добавить (Enter)' : 'Добавить'}
+          </Button>
 
           {/* Подсказки */}
           <Box 

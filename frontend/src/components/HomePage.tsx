@@ -65,22 +65,41 @@ export default function HomePage() {
       .filter((e: any) => {
         const day = parseInt(e.date.split('.')[0])
         if (isFirstHalf) {
-          return e.amount && day >= 1 && day <= currentDay && day <= 15
+          return e.amount && day >= 1 && day <= Math.min(currentDay, 15) && day <= 15
         } else {
           return e.amount && day >= 16 && day <= currentDay
         }
       })
       .reduce((sum: any, e: any) => sum + e.amount, 0)
+    
+    // Считаем зарплаты за период
+    const currentSalaries = currentEntries
+      .filter((e: any) => {
+        const day = parseInt(e.date.split('.')[0])
+        if (isFirstHalf) {
+          return e.salary && day >= 1 && day <= Math.min(currentDay, 15) && day <= 15
+        } else {
+          return e.salary && day >= 16 && day <= currentDay
+        }
+      })
+      .reduce((sum: any, e: any) => sum + e.salary, 0)
 
     const avgPerDay = currentPeriodDay > 0 ? currentRevenue / currentPeriodDay : 0
     const daysLeft = periodDays - currentPeriodDay
     const forecastValue = currentRevenue + (avgPerDay * daysLeft)
+    
+    // Прибыль = (выручка * 10%) - зарплаты
+    const currentEarnings = (currentRevenue * 0.1) - currentSalaries
+    const forecastEarnings = (forecastValue * 0.1) - currentSalaries
 
     return {
       current: currentRevenue,
       forecast: forecastValue,
       progress: (currentPeriodDay / periodDays) * 100,
-      periodName: isFirstHalf ? '1-15' : '16-31'
+      periodName: isFirstHalf ? '1-15' : '16-31',
+      currentEarnings,
+      forecastEarnings,
+      currentSalaries
     }
   }, [entries])
 
@@ -97,14 +116,23 @@ export default function HomePage() {
       .filter((e: any) => e.amount)
       .reduce((sum: any, e: any) => sum + e.amount, 0)
     
-    const currentEarnings = currentRevenue * 0.10
+    // Зарплаты текущего месяца
+    const currentSalaries = currentEntries
+      .filter((e: any) => e.salary)
+      .reduce((sum: any, e: any) => sum + e.salary, 0)
+    
+    const currentEarnings = (currentRevenue * 0.10) - currentSalaries
     
     // Прошлый месяц
     const prevRevenue = prevEntries
       .filter((e: any) => e.amount)
       .reduce((sum: any, e: any) => sum + e.amount, 0)
     
-    const prevEarnings = prevRevenue * 0.10
+    const prevSalaries = prevEntries
+      .filter((e: any) => e.salary)
+      .reduce((sum: any, e: any) => sum + e.salary, 0)
+    
+    const prevEarnings = (prevRevenue * 0.10) - prevSalaries
     
     // Рост
     const revenueGrowth = prevRevenue > 0 
@@ -125,7 +153,9 @@ export default function HomePage() {
     // Прогноз на конец месяца
     const avgPerDay = currentDay > 0 ? currentRevenue / currentDay : 0
     const forecastRevenue = avgPerDay * daysInMonth
-    const forecastEarnings = forecastRevenue * 0.10
+    const avgSalaryPerDay = currentDay > 0 ? currentSalaries / currentDay : 0
+    const forecastSalaries = avgSalaryPerDay * daysInMonth
+    const forecastEarnings = (forecastRevenue * 0.10) - forecastSalaries
     
     // Дней без записей
     const daysWithEntries = new Set(
@@ -149,10 +179,8 @@ export default function HomePage() {
     const topClient = Array.from(clientRevenue.entries())
       .sort((a, b) => b[1] - a[1])[0]
     
-    // Зарплаты
-    const totalSalaries = currentEntries
-      .filter((e: any) => e.salary)
-      .reduce((sum: any, e: any) => sum + e.salary, 0)
+    // Общие зарплаты (уже посчитаны выше как currentSalaries)
+    const totalSalaries = currentSalaries
     
     return {
       currentRevenue,
@@ -351,13 +379,13 @@ export default function HomePage() {
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={3}>
                 <Box>
                   <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
-                    Ваш заработок за {forecast.periodName}
+                    Ваша прибыль за {forecast.periodName}
                   </Typography>
                   <Typography variant="h3" fontWeight={900} sx={{ mb: 1 }}>
-                    <CountUp end={forecast.current * 0.1} duration={2} separator=" " decimals={2} /> $
+                    <CountUp end={forecast.currentEarnings} duration={2} separator=" " decimals={2} /> $
                   </Typography>
                   <Typography variant="body2">
-                    Прогноз на конец периода: {formatMoney(forecast.forecast * 0.1)} $
+                    Прогноз на конец периода: {formatMoney(forecast.forecastEarnings)} $
                   </Typography>
                 </Box>
                 <Avatar sx={{ width: 64, height: 64, bgcolor: 'rgba(255,255,255,0.2)' }}>
