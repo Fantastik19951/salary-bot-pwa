@@ -30,13 +30,22 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 }
 
 export const sendNotification = async (title: string, options?: NotificationOptions & { url?: string }) => {
+  // Автоматически запрашиваем разрешение, если его нет
+  if (Notification.permission === 'default') {
+    const granted = await requestNotificationPermission()
+    if (!granted) {
+      console.log('Notification permission denied')
+      return
+    }
+  }
+  
   if (Notification.permission !== 'granted') {
     console.log('Notification permission not granted')
     return
   }
 
   try {
-    // Используем Service Worker для iOS совместимости
+    // Пробуем Service Worker для iOS
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
         type: 'SHOW_NOTIFICATION',
@@ -46,7 +55,7 @@ export const sendNotification = async (title: string, options?: NotificationOpti
         url: options?.url || '/'
       })
     } else {
-      // Fallback для старых браузеров
+      // Fallback для ПК и старых браузеров
       new Notification(title, {
         icon: '/icon-192.png',
         badge: '/icon-192.png',
@@ -55,6 +64,17 @@ export const sendNotification = async (title: string, options?: NotificationOpti
     }
   } catch (error) {
     console.error('Error sending notification:', error)
+    // Еще один fallback
+    try {
+      new Notification(title, {
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        body: options?.body,
+        tag: options?.tag
+      })
+    } catch (e) {
+      console.error('Fallback notification failed:', e)
+    }
   }
 }
 

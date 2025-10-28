@@ -64,13 +64,25 @@ export default function QuickAddEntry() {
 
     if (quickMode) {
       // Быстрый режим: парсим единое поле
-      const parsed = parseInput(singleInput)
-      if (!parsed) {
-        haptics.error()
-        return
+      if (type === 'salary') {
+        // Для зарплаты в быстром режиме: только сумма, имя = "ЗАРПЛАТА"
+        const amountValue = parseFloat(singleInput.trim())
+        if (isNaN(amountValue) || amountValue <= 0) {
+          haptics.error()
+          return
+        }
+        name = 'ЗАРПЛАТА'
+        amount = amountValue
+      } else {
+        // Для оборота: парсим "сумма имя" или "имя сумма"
+        const parsed = parseInput(singleInput)
+        if (!parsed) {
+          haptics.error()
+          return
+        }
+        name = parsed.name
+        amount = parsed.amount
       }
-      name = parsed.name
-      amount = parsed.amount
     } else {
       // Обычный режим: используем отдельные поля
       if (type === 'salary') {
@@ -262,7 +274,7 @@ export default function QuickAddEntry() {
             // Быстрый режим: единое поле
             <Box>
               <Typography variant="caption" fontWeight={600} color="text.secondary" mb={1} display="block" fontSize="0.7rem">
-                Запись (сумма + имя)
+                {type === 'salary' ? 'Сумма зарплаты' : 'Запись (сумма + имя)'}
               </Typography>
               <Autocomplete
                 freeSolo
@@ -273,9 +285,10 @@ export default function QuickAddEntry() {
                   <TextField
                     {...params}
                     inputRef={inputRef}
-                    placeholder="5000 Иванов или Иванов 5000"
+                    placeholder={type === 'salary' ? '5000' : '5000 Иванов или Иванов 5000'}
                     size="small"
                     onKeyDown={handleKeyDown}
+                    type={type === 'salary' ? 'number' : 'text'}
                     sx={{
                       '& .MuiInputBase-root': {
                         borderRadius: 2,
@@ -318,31 +331,60 @@ export default function QuickAddEntry() {
 
               {/* Превью парсинга */}
               {singleInput && (() => {
-                const parsed = parseInput(singleInput)
-                if (parsed) {
-                  return (
-                    <Box 
-                      mt={1} 
-                      p={1.5} 
-                      sx={{ 
-                        bgcolor: alpha('#667eea', 0.05),
-                        borderRadius: 1.5,
-                        border: `1px solid ${alpha('#667eea', 0.2)}`
-                      }}
-                    >
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Typography variant="caption" fontSize="0.7rem" color="text.secondary">
-                          Превью:
-                        </Typography>
-                        <Typography variant="body2" fontSize="0.875rem" fontWeight={600}>
-                          {parsed.name}
-                        </Typography>
-                        <Typography variant="body2" fontSize="0.875rem" fontWeight={700} sx={{ color: '#667eea' }}>
-                          ${parsed.amount.toLocaleString()}
-                        </Typography>
-                      </Stack>
-                    </Box>
-                  )
+                if (type === 'salary') {
+                  const amount = parseFloat(singleInput.trim())
+                  if (!isNaN(amount) && amount > 0) {
+                    return (
+                      <Box 
+                        mt={1} 
+                        p={1.5} 
+                        sx={{ 
+                          bgcolor: alpha('#f093fb', 0.05),
+                          borderRadius: 1.5,
+                          border: `1px solid ${alpha('#f093fb', 0.2)}`
+                        }}
+                      >
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          <Typography variant="caption" fontSize="0.7rem" color="text.secondary">
+                            Превью:
+                          </Typography>
+                          <Typography variant="body2" fontSize="0.875rem" fontWeight={600}>
+                            ЗАРПЛАТА
+                          </Typography>
+                          <Typography variant="body2" fontSize="0.875rem" fontWeight={700} sx={{ color: '#f093fb' }}>
+                            ${amount.toLocaleString()}
+                          </Typography>
+                        </Stack>
+                      </Box>
+                    )
+                  }
+                } else {
+                  const parsed = parseInput(singleInput)
+                  if (parsed) {
+                    return (
+                      <Box 
+                        mt={1} 
+                        p={1.5} 
+                        sx={{ 
+                          bgcolor: alpha('#667eea', 0.05),
+                          borderRadius: 1.5,
+                          border: `1px solid ${alpha('#667eea', 0.2)}`
+                        }}
+                      >
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          <Typography variant="caption" fontSize="0.7rem" color="text.secondary">
+                            Превью:
+                          </Typography>
+                          <Typography variant="body2" fontSize="0.875rem" fontWeight={600}>
+                            {parsed.name}
+                          </Typography>
+                          <Typography variant="body2" fontSize="0.875rem" fontWeight={700} sx={{ color: '#667eea' }}>
+                            ${parsed.amount.toLocaleString()}
+                          </Typography>
+                        </Stack>
+                      </Box>
+                    )
+                  }
                 }
                 return null
               })()}
@@ -415,13 +457,19 @@ export default function QuickAddEntry() {
             fullWidth
             variant="contained"
             size="large"
-            disabled={quickMode ? !parseInput(singleInput) : (type === 'amount' ? (!nameInput.trim() || !amountInput) : !amountInput)}
+            disabled={
+              quickMode 
+                ? (type === 'salary' ? !singleInput.trim() : !parseInput(singleInput))
+                : (type === 'amount' ? (!nameInput.trim() || !amountInput) : !amountInput)
+            }
             onClick={handleQuickAdd}
             startIcon={<Check />}
             sx={{
               py: 1.25,
               borderRadius: 2,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: type === 'salary' 
+                ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               fontSize: '0.875rem',
               fontWeight: 700,
               textTransform: 'none',
